@@ -1,6 +1,0 @@
-{"title": "Learn Python", "completed": true, "id": 2}
-{"title": "Study FastAPI", "completed": true, "id": 3}
-{"title": "Go to gym", "completed": false, "id": 4}
-{"title": "Buy groceries", "completed": false, "id": 5}
-{"title": "Read a book", "completed": false, "id": 6}
-{"title": "play football", "completed": false, "id": 7}
