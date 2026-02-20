@@ -13,6 +13,14 @@ This project demonstrates backend fundamentals including:
 
 ---
 
+## Live API
+
+The API is deployed and accessible online 
+
+https://fastapi-task-management-system-1.onrender.com/docs
+
+---
+
 ## Features
 
 - Create task
