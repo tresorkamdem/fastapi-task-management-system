@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Manager</title>
+</head>
+<body>
+    <h1>Task Manager</h1>
+
+    <h2>Create Task</h2>
+    <input id="title" placeholder="Title">
+    <input id="description" placeholder="Description">
+    <button onclick="createTask()">Create</button>
+
+    <h2>Tasks</h2>
+    <button onclick="loadTasks()">Load Tasks</button>
+    <ul id="taskList"></ul>
+
+    <script>
+        const API_URL = "";
+
+        async function createTask() {
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+
+            await fetch("/tasks", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: title,
+                    description: description,
+                    completed: false
+                })
+            });
+
+            loadTasks();
+        }
+
+        async function loadTasks() {
+            const response = await fetch("/tasks");
+            const tasks = await response.json();
+
+            const list = document.getElementById("taskList");
+            list.innerHTML = "";
+
+            tasks.forEach(task => {
+                const li = document.createElement("li");
+                li.innerText = task.title + " - " + (task.completed ? "Done" : "Pending");
+                list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
