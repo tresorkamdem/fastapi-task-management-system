@@ -2,54 +2,203 @@
 <html>
 <head>
     <title>Task Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f6f9;
+        }
+
+        h1 { color: #333; }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        input, button {
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button.delete {
+            background: #e74c3c;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #fff;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
-    <h1>Task Manager</h1>
 
+<h1>🚀 Secure Task Manager</h1>
+
+<div id="auth" class="card">
+    <h2>Register</h2>
+    <input id="reg_username" placeholder="Username">
+    <input id="reg_password" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+
+    <h2>Login</h2>
+    <input id="login_username" placeholder="Username">
+    <input id="login_password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+</div>
+
+<div id="app" class="card hidden">
     <h2>Create Task</h2>
     <input id="title" placeholder="Title">
     <input id="description" placeholder="Description">
     <button onclick="createTask()">Create</button>
 
-    <h2>Tasks</h2>
-    <button onclick="loadTasks()">Load Tasks</button>
+    <h2>Your Tasks</h2>
     <ul id="taskList"></ul>
 
-    <script>
-        const API_URL = "";
+    <button onclick="logout()">Logout</button>
+</div>
 
-        async function createTask() {
-            const title = document.getElementById("title").value;
-            const description = document.getElementById("description").value;
+<script>
+let token = localStorage.getItem("token");
 
-            await fetch("/tasks", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    title: title,
-                    description: description,
-                    completed: false
-                })
-            });
+if (token) {
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    loadTasks();
+}
 
-            loadTasks();
+async function register() {
+    await fetch("/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            username: reg_username.value,
+            password: reg_password.value
+        })
+    });
+    alert("User registered!");
+}
+
+async function login() {
+    const formData = new URLSearchParams();
+    formData.append("username", login_username.value);
+    formData.append("password", login_password.value);
+
+    const response = await fetch("/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: formData
+    });
+
+    const data = await response.json();
+    token = data.access_token;
+    localStorage.setItem("token", token);
+
+    auth.classList.add("hidden");
+    app.classList.remove("hidden");
+
+    loadTasks();
+}
+
+async function createTask() {
+    await fetch("/tasks", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            title: title.value,
+            description: description.value,
+            completed: false
+        })
+    });
+
+    loadTasks();
+}
+
+async function toggleTask(id, completed) {
+    await fetch(`/tasks/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            title: "",
+            description: "",
+            completed: !completed
+        })
+    });
+
+    loadTasks();
+}
+
+async function deleteTask(id) {
+    await fetch(`/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + token
         }
+    });
 
-        async function loadTasks() {
-            const response = await fetch("/tasks");
-            const tasks = await response.json();
+    loadTasks();
+}
 
-            const list = document.getElementById("taskList");
-            list.innerHTML = "";
-
-            tasks.forEach(task => {
-                const li = document.createElement("li");
-                li.innerText = task.title + " - " + (task.completed ? "Done" : "Pending");
-                list.appendChild(li);
-            });
+async function loadTasks() {
+    const response = await fetch("/tasks", {
+        headers: {
+            "Authorization": "Bearer " + token
         }
-    </script>
+    });
+
+    const tasks = await response.json();
+    taskList.innerHTML = "";
+
+    tasks.forEach(task => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+            <span>
+                <input type="checkbox" ${task.completed ? "checked" : ""}
+                onchange="toggleTask(${task.id}, ${task.completed})">
+                ${task.title}
+            </span>
+            <button class="delete" onclick="deleteTask(${task.id})">Delete</button>
+        `;
+
+        taskList.appendChild(li);
+    });
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    location.reload();
+}
+</script>
 </body>
 </html>
